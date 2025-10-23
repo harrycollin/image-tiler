@@ -2,6 +2,25 @@
   "name": "image-tiler",
   "version": "0.1.0",
   "private": true,
+  "author": "Harry Collin",
+  "license": "MIT",
+  "url": "https://image-tiler.harrycollin.com",
+  "homepage": "https://image-tiler.harrycollin.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/harrycollin/image-tiler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/harrycollin/image-tiler/issues"
+  },
+  "keywords": [
+    "image-tiler",
+    "seamless-texture",
+    "tile-generator"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
