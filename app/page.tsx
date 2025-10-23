@@ -272,6 +272,7 @@ export default function ImageTiler() {
               onCropToolToggle={handleCropToolToggle}
               onCropChange={handleCropChange}
               onProcessImage={processImage}
+              onDownload={downloadProcessedImage}
             />
           </div>
 

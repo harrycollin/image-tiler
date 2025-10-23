@@ -14,6 +14,7 @@ interface SettingsPanelProps {
   onCropToolToggle: () => void;
   onCropChange: (crop: ImageTilerSettings["crop"]) => void;
   onProcessImage: () => void;
+  onDownload: () => void;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -27,6 +28,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onCropToolToggle,
   onCropChange,
   onProcessImage,
+  onDownload,
 }) => {
   const [preCropLocked, setPreCropLocked] = useState(true);
 
@@ -526,6 +528,20 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               Processing usually lasts for 5-40 seconds
             </p>
           )}
+        </div>
+
+        {/* Download Button */}
+        <div className="text-center">
+          <button
+            onClick={onDownload}
+            disabled={!originalImage || isProcessing}
+            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded text-sm transition-colors w-full"
+          >
+            Download Result
+          </button>
+          <p className="text-xs text-gray-500 mt-1">
+            Downloads the tiled pattern as {settings.outputFormat.toUpperCase()}
+          </p>
         </div>
       </div>
     </div>
