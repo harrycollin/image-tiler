@@ -17,7 +17,7 @@ export default function ImageTiler() {
     null
   );
   const [settings, setSettings] = useState<ImageTilerSettings>({
-    method: "method2",
+    method: "none",
     tileFormat: "2x2",
     markSeams: "disabled",
     crop: { x: 0, y: 0, width: 0, height: 0 },
@@ -236,20 +236,17 @@ export default function ImageTiler() {
     ) : null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="h-screen bg-gray-50 overflow-hidden">
+      <div className="max-w-full mx-auto px-4 py-6 h-full">
+        <div className="bg-white rounded-lg shadow-lg p-6 h-full flex flex-col">
           <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">
             Visual Image Tiler
           </h1>
-          <p className="text-center text-gray-600 mb-6">
-            The original image is not changed. You will get processed texture
-            and tile to check its seamlessness.
-          </p>
 
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          <div className="flex flex-1 min-h-0 gap-6">
             {/* Main Output Display - Left Side */}
             <ImagePreview
+              ref={previewCanvasRef}
               originalImage={originalImage}
               settings={settings}
               processedImageUrl={processedImageUrl}
@@ -279,7 +276,7 @@ export default function ImageTiler() {
           </div>
 
           {/* GitHub Link */}
-          <div className="mt-8 pt-4 border-t border-gray-200 text-center text-sm text-gray-500">
+          <div className="mt-4 pt-4 border-t border-gray-200 text-center text-sm text-gray-500">
             <a
               href="https://github.com/harrycollin/image-tiler"
               target="_blank"
