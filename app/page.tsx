@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { ImageTilerSettings } from "../types";
 import {
   applyTransform,
@@ -61,7 +61,7 @@ export default function ImageTiler() {
     }
   };
 
-  const processImage = async () => {
+  const processImage = useCallback(async () => {
     if (!originalImage) return;
 
     setIsProcessing(true);
@@ -178,21 +178,21 @@ export default function ImageTiler() {
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [originalImage, settings, processedImageUrl]);
 
   // Auto-process when image or settings change
   useEffect(() => {
     if (originalImage && !showCropTool) {
       processImage();
     }
-  }, [originalImage, settings]);
+  }, [originalImage, settings, processImage, showCropTool]);
 
   // Re-process to show the tiled output when not showing original
   useEffect(() => {
     if (!showOriginal && originalImage && !showCropTool) {
       processImage();
     }
-  }, [showOriginal, originalImage]);
+  }, [showOriginal, originalImage, processImage, showCropTool]);
 
   const downloadProcessedImage = () => {
     if (!previewCanvasRef.current) return;
@@ -249,14 +249,11 @@ export default function ImageTiler() {
               ref={previewCanvasRef}
               originalImage={originalImage}
               settings={settings}
-              processedImageUrl={processedImageUrl}
-              isProcessing={isProcessing}
               showOriginal={showOriginal}
               showCropTool={showCropTool}
               zoomLevel={zoomLevel}
               onZoomChange={setZoomLevel}
               onToggleOriginal={() => setShowOriginal(!showOriginal)}
-              onDownload={downloadProcessedImage}
               cropToolComponent={cropToolComponent}
             />
 
@@ -270,7 +267,6 @@ export default function ImageTiler() {
               onFileSelect={handleFileSelect}
               onSettingsChange={setSettings}
               onCropToolToggle={handleCropToolToggle}
-              onCropChange={handleCropChange}
               onProcessImage={processImage}
               onDownload={downloadProcessedImage}
             />

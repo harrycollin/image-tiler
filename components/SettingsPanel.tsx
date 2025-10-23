@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { ImageTilerSettings } from "../types";
 import { FileUpload } from "./FileUpload";
-import { CropTool } from "./CropTool";
 
 interface SettingsPanelProps {
   selectedFile: File | null;
@@ -12,7 +11,6 @@ interface SettingsPanelProps {
   onFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onSettingsChange: (settings: ImageTilerSettings) => void;
   onCropToolToggle: () => void;
-  onCropChange: (crop: ImageTilerSettings["crop"]) => void;
   onProcessImage: () => void;
   onDownload: () => void;
 }
@@ -26,7 +24,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onFileSelect,
   onSettingsChange,
   onCropToolToggle,
-  onCropChange,
   onProcessImage,
   onDownload,
 }) => {
@@ -197,7 +194,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <select
                 value={settings.method}
                 onChange={(e) =>
-                  updateSettings({ method: e.target.value as any })
+                  updateSettings({
+                    method: e.target.value as ImageTilerSettings["method"],
+                  })
                 }
                 className="w-full p-2 text-sm text-gray-800 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
               >
@@ -220,7 +219,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <select
                 value={settings.tileFormat}
                 onChange={(e) =>
-                  updateSettings({ tileFormat: e.target.value as any })
+                  updateSettings({
+                    tileFormat: e.target
+                      .value as ImageTilerSettings["tileFormat"],
+                  })
                 }
                 className="w-full p-2 text-sm text-gray-800 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
               >
@@ -238,7 +240,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <select
                 value={settings.markSeams}
                 onChange={(e) =>
-                  updateSettings({ markSeams: e.target.value as any })
+                  updateSettings({
+                    markSeams: e.target
+                      .value as ImageTilerSettings["markSeams"],
+                  })
                 }
                 className="w-full p-2 text-sm text-gray-800 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
               >

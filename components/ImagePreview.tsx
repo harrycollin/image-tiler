@@ -4,14 +4,11 @@ import { ImageTilerSettings } from "../types";
 interface ImagePreviewProps {
   originalImage: HTMLImageElement | null;
   settings: ImageTilerSettings;
-  processedImageUrl: string;
-  isProcessing: boolean;
   showOriginal: boolean;
   showCropTool: boolean;
   zoomLevel: number;
   onZoomChange: (zoom: number) => void;
   onToggleOriginal: () => void;
-  onDownload: () => void;
   cropToolComponent?: React.ReactNode;
 }
 
@@ -20,14 +17,11 @@ const ImagePreviewComponent = forwardRef<HTMLCanvasElement, ImagePreviewProps>(
     {
       originalImage,
       settings,
-      processedImageUrl,
-      isProcessing,
       showOriginal,
       showCropTool,
       zoomLevel,
       onZoomChange,
       onToggleOriginal,
-      onDownload,
       cropToolComponent,
     },
     ref
@@ -97,7 +91,7 @@ const ImagePreviewComponent = forwardRef<HTMLCanvasElement, ImagePreviewProps>(
           );
         }
       }
-    }, [showOriginal, originalImage, settings.crop]);
+    }, [showOriginal, originalImage, settings.crop, ref]);
 
     return (
       <div className="flex-1 min-h-0">
