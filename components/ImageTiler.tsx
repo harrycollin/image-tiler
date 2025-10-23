@@ -8,25 +8,36 @@ import { useImageUpload } from "../hooks/useImageUpload";
 
 export default function ImageTiler() {
   // Use custom hooks for image processing and upload management
-  const { selectedFile, originalImage, initialCropSettings, handleFileSelect } =
-    useImageUpload();
+  const {
+    images,
+    selectedImageIndex,
+    selectedFile,
+    originalImage,
+    initialCropSettings,
+    handleFileSelect,
+    setSelectedImageIndex,
+    updateCropForAllImages,
+  } = useImageUpload();
   const {
     isProcessing,
     processedResult,
     processImage,
     downloadProcessedImage,
+    downloadAllImages,
   } = useImageProcessing();
 
   const [settings, setSettings] = useState<ImageTilerSettings>({
     method: "none",
     tileFormat: "2x2",
     markSeams: "disabled",
+    mirrorTiles: true,
     crop: { x: 0, y: 0, width: 0, height: 0 },
     rotation: 0,
     skewX: 0,
     skewY: 0,
     preCrop: { left: 2, top: 2, bottom: 2, right: 2 },
     preAveraging: { intensity: 0, radius: 5 },
+    colorHarmonization: { intensity: 50, radius: 3, blendArea: 25 },
     outputFormat: "jpeg",
     jpegQuality: 92,
   });
@@ -35,6 +46,13 @@ export default function ImageTiler() {
 
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync crop settings when switching images
+  useEffect(() => {
+    if (initialCropSettings) {
+      setSettings((prev) => ({ ...prev, crop: initialCropSettings }));
+    }
+  }, [selectedImageIndex, initialCropSettings]);
 
   // Derive the actual crop to use: if settings.crop is still default (0,0,0,0), use initialCropSettings
   const effectiveCrop =
@@ -47,12 +65,13 @@ export default function ImageTiler() {
   // Auto-process when image or settings change with debounce
   useEffect(() => {
     if (originalImage && !showCropTool) {
-      // Clear existing timeout
+      // Clear existing timeout - this is the smart queuing
+      // Only the latest settings will actually trigger processing
       if (processingTimeoutRef.current) {
         clearTimeout(processingTimeoutRef.current);
       }
 
-      // Debounce processing to prevent excessive calls
+      // Debounce processing to prevent excessive worker messages
       processingTimeoutRef.current = setTimeout(() => {
         const settingsWithEffectiveCrop = { ...settings, crop: effectiveCrop };
         processImage(originalImage, settingsWithEffectiveCrop).catch(
@@ -61,7 +80,7 @@ export default function ImageTiler() {
             alert("Error processing image. Please try again.");
           }
         );
-      }, 50); // 50ms debounce - fast response while preventing rapid-fire updates
+      }, 150); // Longer debounce for smoother slider interaction
     }
 
     // Cleanup timeout on unmount
@@ -70,13 +89,15 @@ export default function ImageTiler() {
         clearTimeout(processingTimeoutRef.current);
       }
     };
-  }, [originalImage, settings, effectiveCrop, showCropTool, processImage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [originalImage, settings, effectiveCrop, showCropTool]);
 
   const handleCropToolToggle = () => {
     setShowCropTool(!showCropTool);
   };
 
   const handleCropChange = (crop: ImageTilerSettings["crop"]) => {
+    updateCropForAllImages(crop);
     setSettings((prev) => ({ ...prev, crop }));
   };
 
@@ -116,16 +137,20 @@ export default function ImageTiler() {
             <SettingsPanel
               selectedFile={selectedFile}
               originalImage={originalImage}
+              images={images}
+              selectedImageIndex={selectedImageIndex}
               settings={settings}
               isProcessing={isProcessing}
               showCropTool={showCropTool}
               onFileSelect={handleFileSelect}
+              onImageSelect={setSelectedImageIndex}
               onSettingsChange={setSettings}
               onCropToolToggle={handleCropToolToggle}
               onProcessImage={() => {
                 // Processing will be triggered by the useEffect when settings change
               }}
               onDownload={() => downloadProcessedImage(settings)}
+              onDownloadAll={() => downloadAllImages(images, settings)}
             />
           </div>
 

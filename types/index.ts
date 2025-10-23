@@ -1,7 +1,8 @@
 export interface ImageTilerSettings {
-  method: "none" | "method1" | "method2" | "method3";
-  tileFormat: "1x1" | "2x2" | "3x3" | "4x4";
+  method: "none" | "method1" | "method2" | "method3" | "method4";
+  tileFormat: "2x2"; // Only 2x2 supported with mirroring
   markSeams: "enabled" | "disabled";
+  mirrorTiles: boolean; // Mirror tiles to create kaleidoscope effect
   crop: {
     x: number;
     y: number;
@@ -20,6 +21,11 @@ export interface ImageTilerSettings {
   preAveraging: {
     intensity: number;
     radius: number;
+  };
+  colorHarmonization: {
+    intensity: number; // 0-100, controls blend strength
+    radius: number; // 1-10 pixels, neighborhood size
+    blendArea: number; // 0-50%, percentage of edge area to affect
   };
   outputFormat: "jpeg" | "png";
   jpegQuality: number;

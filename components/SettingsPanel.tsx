@@ -1,31 +1,40 @@
 import React, { useState } from "react";
 import { ImageTilerSettings } from "../types";
 import { FileUpload } from "./FileUpload";
+import { ImageData } from "../hooks/useImageUpload";
 
 interface SettingsPanelProps {
   selectedFile: File | null;
   originalImage: HTMLImageElement | null;
+  images: ImageData[];
+  selectedImageIndex: number;
   settings: ImageTilerSettings;
   isProcessing: boolean;
   showCropTool: boolean;
   onFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onImageSelect: (index: number) => void;
   onSettingsChange: (settings: ImageTilerSettings) => void;
   onCropToolToggle: () => void;
   onProcessImage: () => void;
   onDownload: () => void;
+  onDownloadAll: () => void;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   selectedFile,
   originalImage,
+  images,
+  selectedImageIndex,
   settings,
   isProcessing,
   showCropTool,
   onFileSelect,
+  onImageSelect,
   onSettingsChange,
   onCropToolToggle,
   onProcessImage,
   onDownload,
+  onDownloadAll,
 }) => {
   const [preCropLocked, setPreCropLocked] = useState(true);
 
@@ -40,18 +49,47 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         style={{ scrollbarWidth: "thin" }}
       >
         {/* File Upload */}
-        <FileUpload selectedFile={selectedFile} onFileSelect={onFileSelect} />
+        <FileUpload
+          selectedFile={selectedFile}
+          fileCount={images.length}
+          onFileSelect={onFileSelect}
+        />
+
+        {/* Image Selector */}
+        {images.length > 1 && (
+          <div className="border rounded-lg p-3">
+            <h3 className="text-sm font-semibold mb-2 text-gray-700">
+              Select Image to Preview
+            </h3>
+            <select
+              value={selectedImageIndex}
+              onChange={(e) => onImageSelect(parseInt(e.target.value))}
+              className="w-full p-2 text-sm text-gray-800 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            >
+              {images.map((imageData, index) => (
+                <option key={index} value={index}>
+                  {imageData.file.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Previewing: {images[selectedImageIndex]?.file.name}
+            </p>
+            <p className="text-xs text-blue-600 mt-0.5">
+              Settings apply to all {images.length} images
+            </p>
+          </div>
+        )}
 
         {/* Crop Tool */}
         {originalImage && !showCropTool && (
           <div className="border rounded-lg p-3">
             <h3 className="text-sm font-semibold mb-2 text-gray-700">
-              Crop Image
+              Crop Image{images.length > 1 ? "s" : ""}
             </h3>
             <button
               onClick={onCropToolToggle}
-              disabled={isProcessing}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded text-sm transition-colors"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded text-sm transition-colors"
             >
               Open Crop Tool
             </button>
@@ -61,9 +99,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </p>
               {settings.crop.width !== originalImage.width ||
               settings.crop.height !== originalImage.height ? (
-                <p className="text-blue-600 font-medium mt-1">
-                  ✓ Custom crop applied
-                </p>
+                <>
+                  <p className="text-blue-600 font-medium mt-1">
+                    ✓ Custom crop applied
+                  </p>
+                  {images.length > 1 && (
+                    <p className="text-blue-600 text-xs mt-0.5">
+                      (applies to all images)
+                    </p>
+                  )}
+                </>
               ) : (
                 <p className="text-gray-500 mt-1">Using full image</p>
               )}
@@ -204,34 +249,102 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <option value="method1">No.1 (simple blend)</option>
                 <option value="method2">No.2 (offset blend)</option>
                 <option value="method3">No.3 (gradient blend)</option>
+                <option value="method4">No.4 (color harmonization)</option>
               </select>
               <p className="text-xs text-gray-500 mt-1">
                 {settings.method === "none"
                   ? "No edge processing - shows raw seams"
+                  : settings.method === "method4"
+                  ? "Reduces color distance between neighboring pixels"
                   : "Blends edges to create seamless texture"}
               </p>
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Tile Format:
-              </label>
-              <select
-                value={settings.tileFormat}
-                onChange={(e) =>
-                  updateSettings({
-                    tileFormat: e.target
-                      .value as ImageTilerSettings["tileFormat"],
-                  })
-                }
-                className="w-full p-2 text-sm text-gray-800 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-              >
-                <option value="1x1">1x1</option>
-                <option value="2x2">2x2</option>
-                <option value="3x3">3x3</option>
-                <option value="4x4">4x4</option>
-              </select>
-            </div>
+            {/* Color Harmonization Controls */}
+            {settings.method === "method4" && (
+              <div className="space-y-3 border-t pt-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Intensity: {settings.colorHarmonization.intensity}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={settings.colorHarmonization.intensity}
+                    onChange={(e) =>
+                      updateSettings({
+                        colorHarmonization: {
+                          ...settings.colorHarmonization,
+                          intensity: parseInt(e.target.value),
+                        },
+                      })
+                    }
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>0%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Radius: {settings.colorHarmonization.radius}px
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    step="1"
+                    value={settings.colorHarmonization.radius}
+                    onChange={(e) =>
+                      updateSettings({
+                        colorHarmonization: {
+                          ...settings.colorHarmonization,
+                          radius: parseInt(e.target.value),
+                        },
+                      })
+                    }
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>1px</span>
+                    <span>10px</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Blend Area: {settings.colorHarmonization.blendArea}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="50"
+                    step="1"
+                    value={settings.colorHarmonization.blendArea}
+                    onChange={(e) =>
+                      updateSettings({
+                        colorHarmonization: {
+                          ...settings.colorHarmonization,
+                          blendArea: parseInt(e.target.value),
+                        },
+                      })
+                    }
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>0%</span>
+                    <span>50%</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Percentage of edge area to harmonize
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -250,6 +363,28 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <option value="disabled">Disabled</option>
                 <option value="enabled">Enabled</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Mirror Tiles:
+              </label>
+              <select
+                value={settings.mirrorTiles ? "enabled" : "disabled"}
+                onChange={(e) =>
+                  updateSettings({
+                    mirrorTiles: e.target.value === "enabled",
+                  })
+                }
+                className="w-full p-2 text-sm text-gray-800 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              >
+                <option value="disabled">Disabled</option>
+                <option value="enabled">Enabled (kaleidoscope)</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                {settings.mirrorTiles
+                  ? "Tiles are mirrored for seamless kaleidoscope effect"
+                  : "Tiles repeat without mirroring"}
+              </p>
             </div>
           </div>
         </div>
@@ -523,30 +658,95 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div className="text-center">
           <button
             onClick={onProcessImage}
-            disabled={!originalImage || isProcessing}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded text-sm transition-colors w-full"
+            disabled={!originalImage}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded text-sm transition-colors w-full flex items-center justify-center gap-2"
           >
-            {isProcessing ? "Processing..." : "Reprocess Image"}
+            {isProcessing && (
+              <svg
+                className="animate-spin h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            )}
+            <span>{isProcessing ? "Processing..." : "Reprocess Image"}</span>
           </button>
-          {isProcessing && (
-            <p className="text-xs text-gray-500 mt-1">
-              Processing usually lasts for 5-40 seconds
-            </p>
-          )}
+          <p className="text-xs text-gray-500 mt-1">
+            Auto-processes on settings change
+          </p>
         </div>
 
         {/* Download Button */}
-        <div className="text-center">
-          <button
-            onClick={onDownload}
-            disabled={!originalImage || isProcessing}
-            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded text-sm transition-colors w-full"
-          >
-            Download Result
-          </button>
-          <p className="text-xs text-gray-500 mt-1">
-            Downloads the tiled pattern as {settings.outputFormat.toUpperCase()}
-          </p>
+        <div className="text-center space-y-2">
+          {images.length > 1 ? (
+            <>
+              <button
+                onClick={onDownloadAll}
+                disabled={!originalImage || isProcessing}
+                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded text-sm transition-colors w-full flex items-center justify-center gap-2"
+              >
+                {isProcessing && (
+                  <svg
+                    className="animate-spin h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                )}
+                <span>
+                  {isProcessing
+                    ? "Processing..."
+                    : `Download All (${images.length})`}
+                </span>
+              </button>
+              <p className="text-xs text-gray-500">
+                Processes and downloads all {images.length} images with current
+                settings
+              </p>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={onDownload}
+                disabled={!originalImage}
+                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded text-sm transition-colors w-full"
+              >
+                Download Result
+              </button>
+              <p className="text-xs text-gray-500">
+                Downloads the tiled pattern as{" "}
+                {settings.outputFormat.toUpperCase()}
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>
